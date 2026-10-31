@@ -61,31 +61,31 @@ Astro `dev` uses the `development` override; `astro build` uses `production`. Th
 
 Both providers use the OpenAI embeddings API format. OpenAI uses `https://api.openai.com/v1` by default; LM Studio uses `http://127.0.0.1:1234/v1`. Set `baseUrl` when your server listens elsewhere, and set `model` to a model available to that provider. LM Studio defaults to `text-embedding-nomic-embed-text-v1.5`; OpenAI defaults to `text-embedding-3-small`.
 
-| Provider setting | Description |
-| --- | --- |
-| `type` | `"openai"` or `"lmstudio"`. Defaults to `"openai"`. |
-| `baseUrl` | OpenAI-compatible API base URL. Defaults depend on `type`. |
-| `model` | Embedding model name. Defaults depend on `type`. |
-| `batchSize` | Content entries per embedding request. Defaults to `32`. |
+| Provider setting | Description                                                |
+| ---------------- | ---------------------------------------------------------- |
+| `type`           | `"openai"` or `"lmstudio"`. Defaults to `"openai"`.        |
+| `baseUrl`        | OpenAI-compatible API base URL. Defaults depend on `type`. |
+| `model`          | Embedding model name. Defaults depend on `type`.           |
+| `batchSize`      | Content entries per embedding request. Defaults to `32`.   |
 
 The OpenAI SDK sends one request per batch, does not retry failed requests, and times out a request after 60 seconds. A failed OpenAI request can then use the configured LM Studio fallback.
 
 ### Integration options
 
-| Option | Default | Description |
-| --- | --- | --- |
-| `collections` | all collections | Optional allowlist of Astro content collections to index. |
-| `provider` | OpenAI | Default provider and its settings. |
-| `environments` | `{}` | Provider overrides keyed by environment name. |
-| `environment` | `"development"` for `astro dev`; `"production"` for `astro build` | Explicit environment key to select an override. |
-| `fallback` | LM Studio | Fallback settings for an OpenAI provider. Set to `false` to disable fallback. |
-| `threshold` | `0.65` | Minimum cosine similarity score for a recommendation. |
-| `limit` | `3` | Maximum recommendations returned per entry. |
-| `logLevel` | `"warn"` | One of `"silent"`, `"error"`, `"warn"`, `"info"`, or `"debug"`. |
-| `failOnError` | `false` | Throw if no configured provider can generate embeddings. |
-| `cache` | `true` | Store embeddings in SQLite during Astro builds. |
-| `cachePath` | `.astro/embeddings.db` | SQLite file path, relative to the project root. |
-| `outputSimilarityScores` | `false` | Write pairwise similarity score JSON files into the build output. |
+| Option                   | Default                                                           | Description                                                                   |
+| ------------------------ | ----------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| `collections`            | all collections                                                   | Optional allowlist of Astro content collections to index.                     |
+| `provider`               | OpenAI                                                            | Default provider and its settings.                                            |
+| `environments`           | `{}`                                                              | Provider overrides keyed by environment name.                                 |
+| `environment`            | `"development"` for `astro dev`; `"production"` for `astro build` | Explicit environment key to select an override.                               |
+| `fallback`               | LM Studio                                                         | Fallback settings for an OpenAI provider. Set to `false` to disable fallback. |
+| `threshold`              | `0.65`                                                            | Minimum cosine similarity score for a recommendation.                         |
+| `limit`                  | `3`                                                               | Maximum recommendations returned per entry.                                   |
+| `logLevel`               | `"warn"`                                                          | One of `"silent"`, `"error"`, `"warn"`, `"info"`, or `"debug"`.               |
+| `failOnError`            | `false`                                                           | Throw if no configured provider can generate embeddings.                      |
+| `cache`                  | `true`                                                            | Store embeddings in SQLite during Astro builds.                               |
+| `cachePath`              | `.astro/embeddings.db`                                            | SQLite file path, relative to the project root.                               |
+| `outputSimilarityScores` | `false`                                                           | Write pairwise similarity score JSON files into the build output.             |
 
 ```js
 contentVectors({

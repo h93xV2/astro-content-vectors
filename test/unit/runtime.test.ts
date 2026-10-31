@@ -334,9 +334,7 @@ describe("getRelatedContent", () => {
             fetch: async () => new Response("offline", { status: 503 }),
         });
         expect(result.get("one")).toEqual([]);
-        expect(warnings[0]).toContain(
-            "503 offline",
-        );
+        expect(warnings[0]).toContain("503 offline");
 
         await expect(
             getRelatedContent([{ id: "one" }, { id: "two" }], {

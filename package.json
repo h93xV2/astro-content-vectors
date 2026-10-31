@@ -3,6 +3,7 @@
     "description": "An Astro integration for vector-based related content using local or hosted embeddings.",
     "version": "0.1.0",
     "author": "h93xV2",
+    "license": "MIT",
     "repository": {
         "type": "git",
         "url": "git+https://github.com/h93xV2/astro-content-vectors.git"
