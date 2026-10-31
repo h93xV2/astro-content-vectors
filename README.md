@@ -2,10 +2,14 @@
 
 An Astro integration that ranks entries in a content collection by embedding similarity. It uses OpenAI when `OPENAI_API_KEY` is available and automatically falls back to a local LM Studio server when the key is missing or OpenAI is unreachable.
 
+Requires Astro 7 or later and Node.js 20 or later for the build process.
+
 ## Install
 
 ```sh
-bun add astro-content-vectors
+npm install astro-content-vectors
+# or: pnpm add astro-content-vectors
+# or: bun add astro-content-vectors
 ```
 
 Add the integration in `astro.config.mjs`:
@@ -49,9 +53,39 @@ export default defineConfig({
 });
 ```
 
-Set `OPENAI_API_KEY` in the environment where Astro runs. The integration detects it automatically and never puts the key into client bundles or injected configuration. Without the key it uses LM Studio directly. If an OpenAI request fails, it retries through LM Studio. If both providers fail, it logs a warning and returns no recommendations by default; set `failOnError: true` to fail the build instead. Start LM Studio's local server and load an embedding model for the fallback to work.
+Set `OPENAI_API_KEY` in the environment where the Astro build runs. The integration detects it automatically and never puts the key into client bundles or injected configuration. Without the key, it tries the configured LM Studio fallback. If an OpenAI request fails, it tries the fallback once. If both providers fail, it logs a warning and returns no recommendations by default; set `failOnError: true` to fail the build instead. Start LM Studio's local server and load an embedding model for the fallback to work.
 
 Astro `dev` uses the `development` override; `astro build` uses `production`. The integration selects an override using Astro's `import.meta.env.MODE`, so custom modes such as `astro build --mode preview` work as environment keys too. Set `environment` to explicitly override the detected mode. Each environment may override the single default `provider`; any omitted settings inherit from the default. OpenAI environments use the default LM Studio fallback; configure it with the top-level `fallback` option or set `fallback: false` to disable it. An environment configured with LM Studio uses only that provider.
+
+### Provider configuration
+
+Both providers use the OpenAI embeddings API format. OpenAI uses `https://api.openai.com/v1` by default; LM Studio uses `http://127.0.0.1:1234/v1`. Set `baseUrl` when your server listens elsewhere, and set `model` to a model available to that provider. LM Studio defaults to `text-embedding-nomic-embed-text-v1.5`; OpenAI defaults to `text-embedding-3-small`.
+
+| Provider setting | Description |
+| --- | --- |
+| `type` | `"openai"` or `"lmstudio"`. Defaults to `"openai"`. |
+| `baseUrl` | OpenAI-compatible API base URL. Defaults depend on `type`. |
+| `model` | Embedding model name. Defaults depend on `type`. |
+| `batchSize` | Content entries per embedding request. Defaults to `32`. |
+
+The OpenAI SDK sends one request per batch, does not retry failed requests, and times out a request after 60 seconds. A failed OpenAI request can then use the configured LM Studio fallback.
+
+### Integration options
+
+| Option | Default | Description |
+| --- | --- | --- |
+| `collections` | all collections | Optional allowlist of Astro content collections to index. |
+| `provider` | OpenAI | Default provider and its settings. |
+| `environments` | `{}` | Provider overrides keyed by environment name. |
+| `environment` | `"development"` for `astro dev`; `"production"` for `astro build` | Explicit environment key to select an override. |
+| `fallback` | LM Studio | Fallback settings for an OpenAI provider. Set to `false` to disable fallback. |
+| `threshold` | `0.65` | Minimum cosine similarity score for a recommendation. |
+| `limit` | `3` | Maximum recommendations returned per entry. |
+| `logLevel` | `"warn"` | One of `"silent"`, `"error"`, `"warn"`, `"info"`, or `"debug"`. |
+| `failOnError` | `false` | Throw if no configured provider can generate embeddings. |
+| `cache` | `true` | Store embeddings in SQLite during Astro builds. |
+| `cachePath` | `.astro/embeddings.db` | SQLite file path, relative to the project root. |
+| `outputSimilarityScores` | `false` | Write pairwise similarity score JSON files into the build output. |
 
 ```js
 contentVectors({
@@ -81,16 +115,18 @@ const relatedPosts = recommendations
 {relatedPosts.map((entry) => <a href={`/blog/${entry.id}/`}>{entry.data.title}</a>)}
 ```
 
-Each collection is indexed once per server/build process. The integration embeds each entry's title, description (if any), and Markdown body. Collections can be restricted with `collections`; `threshold`, `limit`, and `logLevel` control recommendation output and diagnostics. Set `logLevel` to `silent` to disable logs.
+Each collection is indexed once per server/build process. The integration embeds each entry's title, description (if any), and Markdown body. `getRelatedContent(collection, id)` returns an array of `{ id, score }` objects, ordered by descending cosine similarity. The current entry is excluded from its own recommendations. Entries scoring below `threshold` are omitted. Set `logLevel` to `silent` to disable logs.
 
 By default, generated vectors are cached in `.astro/embeddings.db` using SQLite. The cache is keyed by collection, entry ID, provider, and model, and refreshes an entry when its source text changes. Set `cache: false` to disable it or `cachePath` to choose another database file.
 
-The integration calls the embeddings endpoint directly with `fetch`, so LM Studio and OpenAI use the same request format. The runtime API is also exported for custom content loaders:
+The integration uses the OpenAI SDK for embedding requests. LM Studio works through its OpenAI-compatible API. The runtime API is also exported for custom content loaders:
+
+The runtime helper accepts documents with an `id` and optional `title`, `text`, and `body` fields. Its configuration requires a provider `baseUrl` and `model`; SQLite caching is disabled for direct runtime calls unless `cache: true` is passed.
 
 To inspect how your content compares while tuning `threshold`, enable the optional score report:
 
 ```ts
-astroContentVectors({
+contentVectors({
     outputSimilarityScores: true,
     threshold: 0.7,
 });
@@ -129,7 +165,12 @@ The integration picks up this variable automatically. Keep it in the CI or hosti
 
 ```sh
 bun install
+bun run check
 bun run typecheck
-bun test
+bun run test
+bun run test:package
+bun run test:astro-install
 bun run build
 ```
+
+`bun run test` runs the unit and integration suites. `bun run test:package` builds the package and checks its exports. `bun run test:astro-install` packs and installs the package into a temporary Astro 7 fixture, then runs a static build against a local mock embeddings server.

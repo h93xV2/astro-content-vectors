@@ -35,7 +35,7 @@
         "node": ">=20"
     },
     "peerDependencies": {
-        "astro": ">=5.0.0"
+        "astro": ">=7.0.0"
     },
     "scripts": {
         "build": "npm run clean && tsc -p tsconfig.build.json",
