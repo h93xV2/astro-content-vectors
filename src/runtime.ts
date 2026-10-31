@@ -1,3 +1,4 @@
+import OpenAI from "openai";
 import {
     getEmbeddingDatabase,
     getPostEmbeddingCacheEntry,
@@ -128,40 +129,39 @@ const requestEmbeddings = async (
     config: ContentVectorsConfig,
 ): Promise<number[][]> => {
     const { provider } = config;
-    const requestFetch = config.fetch ?? fetch;
-    const endpoint = `${provider.baseUrl.replace(/\/$/, "")}/embeddings`;
     const apiKey = providerApiKey(provider);
     if (usesOpenAI(provider) && !apiKey) {
         throw new Error(
             "OPENAI_API_KEY is required when using the OpenAI embeddings provider.",
         );
     }
-    const response = await requestFetch(endpoint, {
-        method: "POST",
-        headers: {
-            "content-type": "application/json",
-            ...(apiKey ? { authorization: `Bearer ${apiKey}` } : {}),
-            ...provider.headers,
-        },
-        body: JSON.stringify({ model: provider.model, input: texts }),
+    const client = new OpenAI({
+        apiKey: apiKey ?? "lm-studio",
+        baseURL: provider.baseUrl,
+        defaultHeaders: provider.headers,
+        fetch: config.fetch,
+        maxRetries: 0,
+        timeout: 60_000,
     });
-
-    if (!response.ok) {
-        const detail = await response.text().catch(() => "");
-        throw new Error(
-            `Embedding request failed (${response.status}): ${detail || response.statusText}`,
-        );
+    let payload;
+    try {
+        payload = await client.embeddings.create({
+            model: provider.model,
+            input: texts,
+        });
+    } catch (error) {
+        if (
+            error instanceof OpenAI.APIConnectionError &&
+            error.cause instanceof Error
+        ) {
+            throw new Error(`${error.message}: ${error.cause.message}`, {
+                cause: error,
+            });
+        }
+        throw error;
     }
-
-    const payload = (await response.json()) as {
-        data?: Array<{ index: number; embedding: number[] }>;
-        error?: { message?: string };
-    };
-    if (!payload.data || payload.data.length !== texts.length) {
-        throw new Error(
-            payload.error?.message ??
-                "Embedding provider returned an unexpected response.",
-        );
+    if (payload.data.length !== texts.length) {
+        throw new Error("Embedding provider returned an unexpected response.");
     }
 
     return [...payload.data]

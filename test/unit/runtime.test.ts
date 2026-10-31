@@ -335,7 +335,7 @@ describe("getRelatedContent", () => {
         });
         expect(result.get("one")).toEqual([]);
         expect(warnings[0]).toContain(
-            "Embedding request failed (503): offline",
+            "503 offline",
         );
 
         await expect(
