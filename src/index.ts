@@ -1,3 +1,4 @@
+import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import type { AstroIntegration } from "astro";
 
@@ -20,6 +21,10 @@ export type AstroContentVectorsOptions = {
     failOnError?: boolean;
     /** Write all pairwise scores to `<outDir>/content-vector-similarities/`. */
     outputSimilarityScores?: boolean;
+    /** Persist generated vectors in SQLite. Defaults to true. */
+    cache?: boolean;
+    /** SQLite file path, relative to the Astro project root. */
+    cachePath?: string;
 };
 
 export type ProviderSelection = {
@@ -61,6 +66,7 @@ const defineProvider = (
 const defineEnvironment = (
     name: string,
     options: AstroContentVectorsOptions,
+    projectRoot: string,
 ) => {
     const selected = {
         type: "openai" as const,
@@ -82,6 +88,11 @@ const defineEnvironment = (
         logLevel: options.logLevel,
         failOnError: options.failOnError ?? false,
         collections: options.collections ?? null,
+        cache: options.cache ?? true,
+        cachePath: resolve(
+            projectRoot,
+            options.cachePath ?? ".astro/embeddings.db",
+        ),
     };
 };
 
@@ -104,10 +115,11 @@ export default function astroContentVectors(
                     ...Object.keys(options.environments ?? {}),
                     ...(options.environment ? [options.environment] : []),
                 ]);
+                const projectRoot = fileURLToPath(config.root);
                 const environments = Object.fromEntries(
                     [...environmentNames].map((name) => [
                         name,
-                        defineEnvironment(name, options),
+                        defineEnvironment(name, options, projectRoot),
                     ]),
                 );
 

@@ -83,6 +83,8 @@ const relatedPosts = recommendations
 
 Each collection is indexed once per server/build process. The integration embeds each entry's title, description (if any), and Markdown body. Collections can be restricted with `collections`; `threshold`, `limit`, and `logLevel` control recommendation output and diagnostics. Set `logLevel` to `silent` to disable logs.
 
+By default, generated vectors are cached in `.astro/embeddings.db` using SQLite. The cache is keyed by collection, entry ID, provider, and model, and refreshes an entry when its source text changes. Set `cache: false` to disable it or `cachePath` to choose another database file.
+
 The integration calls the embeddings endpoint directly with `fetch`, so LM Studio and OpenAI use the same request format. The runtime API is also exported for custom content loaders:
 
 To inspect how your content compares while tuning `threshold`, enable the optional score report:
@@ -104,6 +106,7 @@ const index = await getRelatedContent(documents, {
         baseUrl: "http://127.0.0.1:1234/v1",
         model: "your-loaded-embedding-model",
     },
+    cache: true,
 });
 ```
 
