@@ -1,0 +1,103 @@
+{
+    "name": "astro-content-vectors",
+    "description": "An Astro integration for vector-based related content using local or hosted embeddings.",
+    "version": "0.1.0",
+    "author": "h93xV2",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/h93xV2/astro-content-vectors.git"
+    },
+    "homepage": "https://github.com/h93xV2/astro-content-vectors#readme",
+    "bugs": {
+        "url": "https://github.com/h93xV2/astro-content-vectors/issues"
+    },
+    "type": "module",
+    "files": [
+        "dist",
+        "src/virtual.d.ts"
+    ],
+    "main": "./dist/index.js",
+    "types": "./dist/index.d.ts",
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "import": "./dist/index.js"
+        },
+        "./runtime": {
+            "types": "./dist/runtime.d.ts",
+            "import": "./dist/runtime.js"
+        },
+        "./virtual": {
+            "types": "./src/virtual.d.ts"
+        }
+    },
+    "engines": {
+        "node": ">=20"
+    },
+    "peerDependencies": {
+        "astro": ">=5.0.0"
+    },
+    "scripts": {
+        "build": "tsc -p tsconfig.build.json",
+        "prepack": "npm run build",
+        "setup": "husky",
+        "test": "bun run test:unit && bun run test:integration",
+        "test:integration": "bun test test/integration",
+        "test:package": "bun run build && bun test test/package",
+        "test:unit": "bun test test/unit",
+        "typecheck": "tsc --noEmit",
+        "format": "biome format --write .",
+        "format:check": "biome format .",
+        "lint": "biome lint .",
+        "check": "biome check ."
+    },
+    "release": {
+        "branches": [
+            "main"
+        ],
+        "plugins": [
+            "@semantic-release/commit-analyzer",
+            "@semantic-release/release-notes-generator",
+            [
+                "@semantic-release/npm",
+                {
+                    "npmPublish": false
+                }
+            ],
+            [
+                "@semantic-release/exec",
+                {
+                    "publishCmd": "npm stage publish"
+                }
+            ],
+            [
+                "@semantic-release/git",
+                {
+                    "assets": [
+                        "package.json",
+                        "bun.lock"
+                    ],
+                    "message": "chore(release): ${nextRelease.version} [skip ci]"
+                }
+            ],
+            "@semantic-release/github"
+        ]
+    },
+    "devDependencies": {
+        "@biomejs/biome": "2.6.2",
+        "@commitlint/cli": "21.2.4",
+        "@commitlint/config-conventional": "21.2.4",
+        "@semantic-release/commit-analyzer": "13.0.1",
+        "@semantic-release/exec": "7.1.0",
+        "@semantic-release/git": "11.0.1",
+        "@semantic-release/github": "12.0.9",
+        "@semantic-release/npm": "13.2.0",
+        "@semantic-release/release-notes-generator": "14.1.1",
+        "@types/bun": "1.4.3",
+        "astro": "^7.0.0",
+        "husky": "9.1.7",
+        "lint-staged": "17.6.0",
+        "semantic-release": "25.0.9",
+        "typescript": "^5.9.3"
+    }
+}
