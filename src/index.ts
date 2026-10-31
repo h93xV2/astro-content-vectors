@@ -33,15 +33,14 @@ export type ProviderSelection = {
 
 export type ProviderOverride = Partial<ProviderSelection>;
 
-const VIRTUAL_ID = "virtual:astro-content-vectors";
-const RESOLVED_ID = `\0${VIRTUAL_ID}`;
+const VECTORS_CONFIG_DEFINE = "__ASTRO_CONTENT_VECTORS_CONFIG__";
 
 const defineProvider = (
     name: "lmstudio" | "openai",
     configured: Partial<EmbeddingProviderConfig>,
 ) => {
     // API keys are resolved in the server runtime; never serialize secrets into
-    // the generated virtual module.
+    // the settings injected into Astro's Vite build.
     const { apiKey: _apiKey, headers: _headers, ...safeOptions } = configured;
     if (name === "lmstudio") {
         return {
@@ -87,7 +86,7 @@ const defineEnvironment = (
 };
 
 /**
- * Adds `virtual:astro-content-vectors` to an Astro site. It uses OpenAI when
+ * Adds the Astro content-vector helper to a site. It uses OpenAI when
  * OPENAI_API_KEY is available and falls back to the local LM Studio endpoint.
  */
 export default function astroContentVectors(
@@ -112,62 +111,23 @@ export default function astroContentVectors(
                     ]),
                 );
 
+                const runtimeConfig = {
+                    environments,
+                    environment: options.environment,
+                    defaultEnvironment,
+                    outputSimilarityScores:
+                        options.outputSimilarityScores ?? false,
+                    outputDirectory: fileURLToPath(
+                        new URL("content-vector-similarities/", config.outDir),
+                    ),
+                };
+
                 updateConfig({
                     vite: {
-                        plugins: [
-                            {
-                                name: "astro-content-vectors-virtual-module",
-                                resolveId(id: string) {
-                                    return id === VIRTUAL_ID
-                                        ? RESOLVED_ID
-                                        : null;
-                                },
-                                load(id: string) {
-                                    if (id !== RESOLVED_ID) return null;
-                                    return `
-                    import { mkdir, writeFile } from "node:fs/promises";
-                    import { join } from "node:path";
-                    import { getCollection } from "astro:content";
-                    import { getRelatedContent as buildRelatedContent } from "astro-content-vectors/runtime";
-                    const environments = ${JSON.stringify(environments)};
-                    const activeEnvironment = ${JSON.stringify(options.environment)} ?? import.meta.env.MODE ?? ${JSON.stringify(defaultEnvironment)};
-                    const config = environments[activeEnvironment] ?? environments[${JSON.stringify(defaultEnvironment)}];
-                    const outputSimilarityScores = ${JSON.stringify(options.outputSimilarityScores ?? false)};
-                    const outputDirectory = ${JSON.stringify(fileURLToPath(new URL("content-vector-similarities/", config.outDir)))};
-                    if (!config?.provider) throw new Error('astro-content-vectors has no providers configured for environment: ' + activeEnvironment);
-                    let indexes = new Map();
-                    export async function getRelatedContent(collection, id) {
-                      if (config.collections && !config.collections.includes(collection)) {
-                        throw new Error('Collection is not enabled in astro-content-vectors: ' + collection);
-                      }
-                      if (!indexes.has(collection)) {
-                        const pending = getCollection(collection).then((entries) => {
-                          const documents = entries.map((entry) => ({
-                            id: entry.id,
-                            title: entry.data.title,
-                            description: entry.data.description,
-                            body: entry.body ?? '',
-                          }));
-                          const reportConfig = outputSimilarityScores ? {
-                            ...config,
-                            onSimilarityScores: async (pairs) => {
-                              await mkdir(outputDirectory, { recursive: true });
-                              const file = join(outputDirectory, encodeURIComponent(collection) + '.json');
-                              await writeFile(file, JSON.stringify({ collection, threshold: config.threshold ?? 0.65, pairs }, null, 2) + '\\n');
-                            }
-                          } : config;
-                          return buildRelatedContent(documents.map(({ description, ...doc }) => ({ ...doc, text: description })), reportConfig);
-                        });
-                        indexes.set(collection, pending);
-                        pending.catch(() => indexes.delete(collection));
-                      }
-                      const index = await indexes.get(collection);
-                      return index.get(id) ?? [];
-                    }
-                  `;
-                                },
-                            },
-                        ],
+                        define: {
+                            [VECTORS_CONFIG_DEFINE]:
+                                JSON.stringify(runtimeConfig),
+                        },
                     },
                 });
             },

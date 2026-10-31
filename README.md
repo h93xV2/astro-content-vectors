@@ -49,7 +49,7 @@ export default defineConfig({
 });
 ```
 
-Set `OPENAI_API_KEY` in the environment where Astro runs. The integration detects it automatically and never inserts the key into generated module code. Without the key it uses LM Studio directly. If an OpenAI request fails, it retries through LM Studio. If both providers fail, it logs a warning and returns no recommendations by default; set `failOnError: true` to fail the build instead. Start LM Studio's local server and load an embedding model for the fallback to work.
+Set `OPENAI_API_KEY` in the environment where Astro runs. The integration detects it automatically and never puts the key into client bundles or injected configuration. Without the key it uses LM Studio directly. If an OpenAI request fails, it retries through LM Studio. If both providers fail, it logs a warning and returns no recommendations by default; set `failOnError: true` to fail the build instead. Start LM Studio's local server and load an embedding model for the fallback to work.
 
 Astro `dev` uses the `development` override; `astro build` uses `production`. The integration selects an override using Astro's `import.meta.env.MODE`, so custom modes such as `astro build --mode preview` work as environment keys too. Set `environment` to explicitly override the detected mode. Each environment may override the single default `provider`; any omitted settings inherit from the default. OpenAI environments use the default LM Studio fallback; configure it with the top-level `fallback` option or set `fallback: false` to disable it. An environment configured with LM Studio uses only that provider.
 
@@ -63,19 +63,12 @@ contentVectors({
 });
 ```
 
-Add the virtual module's types to `src/env.d.ts`:
-
-```ts
-/// <reference types="astro/client" />
-/// <reference types="astro-content-vectors/virtual" />
-```
-
-Use the virtual API from an Astro component or page frontmatter:
+Import the Astro-aware helper from the package's `astro` entry point in an Astro component or page frontmatter. Its types are included automatically:
 
 ```astro
 ---
 import { getCollection } from "astro:content";
-import { getRelatedContent } from "virtual:astro-content-vectors";
+import { getRelatedContent } from "astro-content-vectors/astro";
 
 const post = Astro.props.post;
 const recommendations = await getRelatedContent("blog", post.id);

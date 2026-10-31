@@ -13,8 +13,7 @@
     },
     "type": "module",
     "files": [
-        "dist",
-        "src/virtual.d.ts"
+        "dist"
     ],
     "main": "./dist/index.js",
     "types": "./dist/index.d.ts",
@@ -27,8 +26,9 @@
             "types": "./dist/runtime.d.ts",
             "import": "./dist/runtime.js"
         },
-        "./virtual": {
-            "types": "./src/virtual.d.ts"
+        "./astro": {
+            "types": "./dist/astro.d.ts",
+            "import": "./dist/astro.js"
         }
     },
     "engines": {
@@ -38,7 +38,8 @@
         "astro": ">=5.0.0"
     },
     "scripts": {
-        "build": "tsc -p tsconfig.build.json",
+        "build": "npm run clean && tsc -p tsconfig.build.json",
+        "clean": "node -e \"require('node:fs').rmSync('dist', { recursive: true, force: true })\"",
         "prepack": "npm run build",
         "setup": "husky",
         "test": "bun run test:unit && bun run test:integration",
