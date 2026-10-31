@@ -83,32 +83,30 @@ export async function getRelatedContent(
                     body: entry.body ?? "",
                 }));
 
-                const reportConfig: ContentVectorsConfig =
-                    outputSimilarityScores
-                        ? {
-                              ...config,
-                              onSimilarityScores: async (
-                                  pairs: SimilarityScore[],
-                              ) => {
-                                  await mkdir(outputDirectory, {
-                                      recursive: true,
-                                  });
-                                  const file = join(
-                                      outputDirectory,
-                                      `${encodeURIComponent(collection)}.json`,
-                                  );
-                                  const report = {
-                                      collection,
-                                      threshold: config.threshold ?? 0.65,
-                                      pairs,
-                                  };
-                                  await writeFile(
-                                      file,
-                                      `${JSON.stringify(report, null, 2)}\n`,
-                                  );
-                              },
-                          }
-                        : config;
+                const reportConfig: ContentVectorsConfig = {
+                    ...config,
+                    cacheNamespace: collection,
+                };
+                if (outputSimilarityScores) {
+                    reportConfig.onSimilarityScores = async (
+                        pairs: SimilarityScore[],
+                    ) => {
+                        await mkdir(outputDirectory, { recursive: true });
+                        const file = join(
+                            outputDirectory,
+                            `${encodeURIComponent(collection)}.json`,
+                        );
+                        const report = {
+                            collection,
+                            threshold: config.threshold ?? 0.65,
+                            pairs,
+                        };
+                        await writeFile(
+                            file,
+                            `${JSON.stringify(report, null, 2)}\n`,
+                        );
+                    };
+                }
 
                 return buildRelatedContent(documents, reportConfig);
             },

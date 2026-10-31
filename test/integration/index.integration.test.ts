@@ -15,13 +15,16 @@ const getViteDefines = (
         "astro:config:setup"
     ] as unknown as (context: {
         command: "dev" | "build";
-        config: { outDir: URL };
+        config: { outDir: URL; root: URL };
         updateConfig: (config: CapturedConfig) => void;
     }) => void;
     let configured: CapturedConfig | undefined;
     setup({
         command,
-        config: { outDir: new URL("file:///tmp/astro-content-vectors-dist/") },
+        config: {
+            outDir: new URL("file:///tmp/astro-content-vectors-dist/"),
+            root: new URL("file:///tmp/astro-content-vectors-project/"),
+        },
         updateConfig: (config) => (configured = config),
     });
     return configured!.vite.define;
@@ -116,5 +119,16 @@ describe("Astro integration provider selection", () => {
 
         expect(source).toContain('"outputSimilarityScores":true');
         expect(source).toContain("content-vector-similarities");
+    });
+
+    test("enables the SQLite cache by default and supports disabling it", () => {
+        const defaults = JSON.stringify(getRuntimeConfig("build"));
+        const disabled = JSON.stringify(
+            getRuntimeConfig("build", { cache: false }),
+        );
+
+        expect(defaults).toContain('"cache":true');
+        expect(defaults).toContain(".astro/embeddings.db");
+        expect(disabled).toContain('"cache":false');
     });
 });

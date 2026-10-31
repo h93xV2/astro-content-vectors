@@ -1,5 +1,9 @@
 import { describe, expect, test } from "bun:test";
+import { mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 
+import { closeEmbeddingDatabase } from "../../src/cache.js";
 import {
     type ContentVectorsConfig,
     cosineSimilarity,
@@ -48,6 +52,51 @@ describe("copied related-post helpers", () => {
 });
 
 describe("getRelatedContent", () => {
+    test("reuses cached vectors and regenerates an entry when its text changes", async () => {
+        const directory = mkdtempSync(join(tmpdir(), "astro-content-vectors-"));
+        const cachePath = join(directory, "embeddings.db");
+        const calls: string[][] = [];
+        const config: ContentVectorsConfig = {
+            provider: {
+                baseUrl: "http://localhost:1234/v1",
+                model: "cache-test-model",
+            },
+            cache: true,
+            cachePath,
+            cacheNamespace: "blog",
+            fetch: async (_input, init) => {
+                const { input } = JSON.parse(String(init?.body)) as {
+                    input: string[];
+                };
+                calls.push(input);
+                return response(
+                    input.map((text) =>
+                        text === "Alpha" ? [1, 0] : [0.8, 0.6],
+                    ),
+                );
+            },
+            logLevel: "silent",
+        };
+
+        try {
+            const documents = [
+                { id: "a", title: "Alpha" },
+                { id: "b", title: "Beta" },
+            ];
+            await getRelatedContent(documents, config);
+            await getRelatedContent(documents, config);
+            await getRelatedContent(
+                [documents[0]!, { id: "b", title: "Beta updated" }],
+                config,
+            );
+
+            expect(calls).toEqual([["Alpha", "Beta"], ["Beta updated"]]);
+        } finally {
+            closeEmbeddingDatabase(cachePath);
+            rmSync(directory, { recursive: true, force: true });
+        }
+    });
+
     test("reports every pairwise similarity score when requested", async () => {
         const scores: Array<{
             sourceId: string;

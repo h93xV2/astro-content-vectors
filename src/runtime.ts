@@ -1,4 +1,10 @@
 import {
+    getEmbeddingDatabase,
+    getPostEmbeddingCacheEntry,
+    type PostEmbeddingCacheEntry,
+    savePostEmbedding,
+} from "./cache.js";
+import {
     type Embedding,
     getCosineSimilarity,
     getPairWiseSimilarityScores,
@@ -38,6 +44,12 @@ export type ContentVectorsConfig = {
     logLevel?: "silent" | "error" | "warn" | "info" | "debug";
     threshold?: number;
     limit?: number;
+    /** Persist vectors in SQLite. Direct runtime use defaults to false. */
+    cache?: boolean;
+    /** SQLite database file. Relative paths resolve from the Astro project root. */
+    cachePath?: string;
+    /** Prevent ID collisions between independently processed collections. */
+    cacheNamespace?: string;
     /** Inject fetch in tests or non-standard runtimes. */
     fetch?: FetchLike;
     onSimilarityScores?: (scores: SimilarityScore[]) => void | Promise<void>;
@@ -87,6 +99,19 @@ const log = (
 
 const contentText = (document: ContentDocument) =>
     [document.title, document.text, document.body].filter(Boolean).join("\n\n");
+
+const embeddingCacheId = (
+    id: string,
+    provider: EmbeddingProviderConfig,
+    namespace?: string,
+) =>
+    JSON.stringify([
+        provider.providerName ?? provider.baseUrl,
+        provider.baseUrl,
+        provider.model,
+        namespace ?? "",
+        id,
+    ]);
 
 const usesOpenAI = (provider: EmbeddingProviderConfig) =>
     provider.providerName === "openai" ||
@@ -148,24 +173,91 @@ const embedAll = async (
     texts: string[],
     provider: EmbeddingProviderConfig,
     config: ContentVectorsConfig,
+    ids: string[],
 ): Promise<number[][]> => {
     const batchSize = Math.max(1, provider.batchSize ?? 32);
-    const vectors: number[][] = [];
-    for (let start = 0; start < texts.length; start += batchSize) {
-        const batch = texts.slice(start, start + batchSize);
-        vectors.push(
-            ...(await requestEmbeddings(batch, { ...config, provider })),
-        );
+    const database =
+        config.cache === true
+            ? getEmbeddingDatabase(config.cachePath)
+            : undefined;
+    const vectors: Array<number[] | undefined> = new Array(texts.length);
+    const cacheEntries: Array<PostEmbeddingCacheEntry | undefined> = new Array(
+        texts.length,
+    );
+    const missing: number[] = [];
+
+    for (let index = 0; index < texts.length; index++) {
+        const id = ids[index];
+        const text = texts[index];
+        if (id === undefined || text === undefined) {
+            throw new Error("Content IDs and text must have matching lengths.");
+        }
+        const cacheId = embeddingCacheId(id, provider, config.cacheNamespace);
+        const entry = database
+            ? getPostEmbeddingCacheEntry(database, cacheId, text)
+            : undefined;
+        if (entry?.vector) {
+            vectors[index] = entry.vector;
+        } else {
+            missing.push(index);
+            cacheEntries[index] = entry;
+        }
+    }
+
+    const updates: Array<{
+        index: number;
+        cacheId: string;
+        vector: number[];
+        entry: PostEmbeddingCacheEntry;
+    }> = [];
+    for (let start = 0; start < missing.length; start += batchSize) {
+        const indices = missing.slice(start, start + batchSize);
+        const batch = indices.map((index) => texts[index]!);
+        const batchVectors = await requestEmbeddings(batch, {
+            ...config,
+            provider,
+        });
+        indices.forEach((index, batchIndex) => {
+            const vector = batchVectors[batchIndex];
+            if (!vector) {
+                throw new Error(
+                    "Embedding provider returned fewer vectors than requested.",
+                );
+            }
+            vectors[index] = vector;
+            const entry = cacheEntries[index];
+            if (database && entry) {
+                const id = ids[index]!;
+                updates.push({
+                    index,
+                    cacheId: embeddingCacheId(
+                        id,
+                        provider,
+                        config.cacheNamespace,
+                    ),
+                    vector,
+                    entry,
+                });
+            }
+        });
         log(
             config,
             "debug",
-            `Embedded ${Math.min(start + batch.length, texts.length)} of ${texts.length} entries with ${provider.model}.`,
+            `Embedded ${Math.min(start + indices.length, missing.length)} of ${missing.length} uncached entries with ${provider.model}.`,
         );
     }
 
-    const dimensions = vectors[0]?.length;
+    const completeVectors = vectors.map((vector) => {
+        if (!vector) {
+            throw new Error(
+                "Embedding provider returned fewer vectors than documents.",
+            );
+        }
+        return vector;
+    });
+    const dimensions = completeVectors[0]?.length;
     if (
-        vectors.some(
+        completeVectors.some(
             (vector) => vector.length === 0 || vector.length !== dimensions,
         )
     ) {
@@ -173,7 +265,18 @@ const embedAll = async (
             "Embedding provider returned vectors with incompatible dimensions.",
         );
     }
-    return vectors;
+    if (database) {
+        for (const { cacheId, vector, entry } of updates) {
+            savePostEmbedding(
+                database,
+                cacheId,
+                entry.hashedContent,
+                vector,
+                entry.row,
+            );
+        }
+    }
+    return completeVectors;
 };
 
 /** Generate vectors and return ranked recommendations for every document. */
@@ -215,7 +318,12 @@ export async function getRelatedContent(
             const primaryProvider = primaryApiKey
                 ? { ...config.provider, apiKey: primaryApiKey }
                 : config.provider;
-            vectors = await embedAll(texts, primaryProvider, config);
+            vectors = await embedAll(
+                texts,
+                primaryProvider,
+                config,
+                documents.map(({ id }) => id),
+            );
         } catch (error) {
             primaryError = error;
             if (config.fallbackProvider) {
@@ -241,7 +349,12 @@ export async function getRelatedContent(
             `Generating embeddings with fallback model ${config.fallbackProvider.model}.`,
         );
         try {
-            vectors = await embedAll(texts, config.fallbackProvider, config);
+            vectors = await embedAll(
+                texts,
+                config.fallbackProvider,
+                config,
+                documents.map(({ id }) => id),
+            );
         } catch (fallbackError) {
             const message = `Fallback embedding provider failed. ${fallbackError instanceof Error ? fallbackError.message : String(fallbackError)}`;
             log(config, "warn", message);
