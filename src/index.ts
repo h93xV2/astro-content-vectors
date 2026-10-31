@@ -19,7 +19,7 @@ export type AstroContentVectorsOptions = {
     logLevel?: "silent" | "error" | "warn" | "info" | "debug";
     /** Throw when both OpenAI and the local fallback fail. Defaults to false. */
     failOnError?: boolean;
-    /** Write all pairwise scores to `<outDir>/content-vector-similarities/`. */
+    /** Write all pairwise scores to `.astro/content-vector-similarities/`. */
     outputSimilarityScores?: boolean;
     /** Persist generated vectors in SQLite. Defaults to true. */
     cache?: boolean;
@@ -129,8 +129,10 @@ export default function astroContentVectors(
                     defaultEnvironment,
                     outputSimilarityScores:
                         options.outputSimilarityScores ?? false,
-                    outputDirectory: fileURLToPath(
-                        new URL("content-vector-similarities/", config.outDir),
+                    outputDirectory: resolve(
+                        projectRoot,
+                        ".astro",
+                        "content-vector-similarities",
                     ),
                 };
 

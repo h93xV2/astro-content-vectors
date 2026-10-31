@@ -110,15 +110,15 @@ describe("Astro integration provider selection", () => {
         expect(source).toContain("default-model");
     });
 
-    test("writes opt-in pairwise scores under Astro's dist directory", () => {
-        const source = JSON.stringify(
-            getRuntimeConfig("build", {
-                outputSimilarityScores: true,
-            }),
-        );
+    test("writes opt-in pairwise scores under the project's .astro directory", () => {
+        const config = getRuntimeConfig("build", {
+            outputSimilarityScores: true,
+        });
 
-        expect(source).toContain('"outputSimilarityScores":true');
-        expect(source).toContain("content-vector-similarities");
+        expect(config.outputSimilarityScores).toBe(true);
+        expect(config.outputDirectory).toBe(
+            "/tmp/astro-content-vectors-project/.astro/content-vector-similarities",
+        );
     });
 
     test("enables the SQLite cache by default and supports disabling it", () => {

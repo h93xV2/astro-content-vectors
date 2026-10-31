@@ -132,7 +132,7 @@ contentVectors({
 });
 ```
 
-During a static build, this writes one JSON file per accessed collection to `dist/content-vector-similarities/`. Each file contains every unique pair of entry IDs and its cosine similarity score, including scores below the configured threshold. The option is off by default.
+During a static build, this writes one JSON file per accessed collection to `.astro/content-vector-similarities/`, alongside the default embeddings cache. Each file contains every unique pair of entry IDs and its cosine similarity score, including scores below the configured threshold. The option is off by default. The reports stay out of `dist` and are not included in the deployed site unless you copy them there yourself.
 
 ```ts
 import { getRelatedContent } from "astro-content-vectors/runtime";
