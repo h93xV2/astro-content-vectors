@@ -44,6 +44,7 @@
         "setup": "husky",
         "test": "bun run test:unit && bun run test:integration",
         "test:integration": "bun test test/integration",
+        "test:astro-install": "bun run build && bun test test/e2e/astro-install.test.ts",
         "test:package": "bun run build && bun test test/package",
         "test:unit": "bun test test/unit",
         "typecheck": "tsc --noEmit",

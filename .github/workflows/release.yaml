@@ -52,6 +52,9 @@ jobs:
             - name: Test packaged artifact
               run: bun test test/package
 
+            - name: Test installed Astro package
+              run: bun run test:astro-install
+
             - name: Inspect npm package
               run: npm pack --dry-run --ignore-scripts
 

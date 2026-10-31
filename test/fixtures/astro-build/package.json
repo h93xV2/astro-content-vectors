@@ -1,0 +1,8 @@
+{
+    "name": "astro-content-vectors-build-fixture",
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "build": "astro build"
+    }
+}

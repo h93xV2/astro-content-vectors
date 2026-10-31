@@ -27,3 +27,6 @@ jobs:
 
             - name: Run tests
               run: bun run test
+
+            - name: Test installed Astro package
+              run: bun run test:astro-install
