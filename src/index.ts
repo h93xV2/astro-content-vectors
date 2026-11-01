@@ -11,7 +11,10 @@ export type AstroContentVectorsOptions = {
     provider?: ProviderSelection;
     /** Select a custom environment key. Defaults to Astro's dev/build command. */
     environment?: string;
-    environments?: Record<string, { provider?: ProviderOverride }>;
+    environments?: Record<
+        string,
+        { provider?: ProviderOverride; failOnError?: boolean }
+    >;
     /** LM Studio fallback used when an OpenAI provider has no key or fails. */
     fallback?: false | ProviderOverride;
     threshold?: number;
@@ -86,7 +89,10 @@ const defineEnvironment = (
         threshold: options.threshold,
         limit: options.limit,
         logLevel: options.logLevel,
-        failOnError: options.failOnError ?? false,
+        failOnError:
+            options.environments?.[name]?.failOnError ??
+            options.failOnError ??
+            false,
         collections: options.collections ?? null,
         cache: options.cache ?? true,
         cachePath: resolve(
