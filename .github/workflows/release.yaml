@@ -43,11 +43,11 @@ jobs:
             - name: Test
               run: bun run test
 
-            - name: Typecheck
-              run: bun run typecheck
-
             - name: Build package
               run: bun run build
+
+            - name: Typecheck
+              run: bun run typecheck
 
             - name: Test packaged artifact
               run: bun test test/package
