@@ -1,7 +1,7 @@
 {
     "name": "astro-content-vectors",
     "description": "An Astro integration for vector-based related content using local or hosted embeddings.",
-    "version": "0.1.0",
+    "version": "1.0.0",
     "author": "h93xV2",
     "license": "MIT",
     "repository": {
