@@ -5,7 +5,10 @@ type Embedding = {
 
 const getCosineSimilarity = (vectorA: number[], vectorB: number[]) => {
     // See https://stackoverflow.com/a/64816824 for dot product calculation explained.
-    const dot = vectorA.reduce((sum, val, i) => sum + val * vectorB[i]!, 0.0);
+    const dot = vectorA.reduce(
+        (sum, val, i) => sum + val * (vectorB[i] ?? 0),
+        0.0,
+    );
     const magnitudeA = Math.sqrt(
         vectorA.reduce((sum, val) => sum + val * val, 0.0),
     );
@@ -53,9 +56,12 @@ const getPairWiseSimilarityScores = (embeddings: Embedding[]) => {
 
     for (let i = 0; i < embeddings.length; i++) {
         for (let j = i + 1; j < embeddings.length; j++) {
+            const embeddingA = embeddings[i];
+            const embeddingB = embeddings[j];
+            if (!embeddingA || !embeddingB) continue;
             const sim = getCosineSimilarity(
-                embeddings[i]!.vector,
-                embeddings[j]!.vector,
+                embeddingA.vector,
+                embeddingB.vector,
             );
             pairs.push(sim);
         }

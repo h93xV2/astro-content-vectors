@@ -86,7 +86,10 @@ describe("getRelatedContent", () => {
             await getRelatedContent(documents, config);
             await getRelatedContent(documents, config);
             await getRelatedContent(
-                [documents[0]!, { id: "b", title: "Beta updated" }],
+                [
+                    documents[0] ?? { id: "a", title: "Alpha" },
+                    { id: "b", title: "Beta updated" },
+                ],
                 config,
             );
 
@@ -140,7 +143,7 @@ describe("getRelatedContent", () => {
             return response(
                 body.input.map(
                     (text) =>
-                        vectors[["Alpha", "Beta", "Gamma"].indexOf(text)]!,
+                        vectors[["Alpha", "Beta", "Gamma"].indexOf(text)] ?? [],
                 ),
             );
         };

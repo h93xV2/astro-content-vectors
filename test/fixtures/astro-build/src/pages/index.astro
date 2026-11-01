@@ -1,13 +1,13 @@
 ---
 import { getRelatedContent } from "astro-content-vectors/astro";
 
-const related = await getRelatedContent("blog", "first");
+const _related = await getRelatedContent("blog", "first");
 ---
 
 <html lang="en">
     <body>
         <ul>
-            {related.map((entry) => <li>{entry.id}</li>)}
+            {_related.map((entry) => <li>{entry.id}</li>)}
         </ul>
     </body>
 </html>

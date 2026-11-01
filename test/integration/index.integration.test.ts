@@ -27,7 +27,9 @@ const getViteDefines = (
         },
         updateConfig: (config) => (configured = config),
     });
-    return configured!.vite.define;
+    if (!configured)
+        throw new Error("Astro integration did not configure Vite");
+    return configured.vite.define;
 };
 
 const getRuntimeConfig = (
@@ -35,7 +37,8 @@ const getRuntimeConfig = (
     options: AstroContentVectorsOptions = {},
 ) =>
     JSON.parse(
-        getViteDefines(command, options).__ASTRO_CONTENT_VECTORS_CONFIG__!,
+        getViteDefines(command, options).__ASTRO_CONTENT_VECTORS_CONFIG__ ??
+            "{}",
     ) as Record<string, unknown>;
 
 describe("Astro integration provider selection", () => {
