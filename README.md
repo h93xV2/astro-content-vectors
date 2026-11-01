@@ -37,6 +37,8 @@ export default defineConfig({
                 },
                 production: {
                     provider: { model: "text-embedding-3-small" },
+                    // Fail production builds when embedding providers are unavailable.
+                    failOnError: true,
                 },
             },
             fallback: {
@@ -55,7 +57,7 @@ export default defineConfig({
 
 Set `OPENAI_API_KEY` in the environment where the Astro build runs. The integration detects it automatically and never puts the key into client bundles or injected configuration. Without the key, it tries the configured LM Studio fallback. If an OpenAI request fails, it tries the fallback once. If both providers fail, it logs a warning and returns no recommendations by default; set `failOnError: true` to fail the build instead. Start LM Studio's local server and load an embedding model for the fallback to work.
 
-Astro `dev` uses the `development` override; `astro build` uses `production`. The integration selects an override using Astro's `import.meta.env.MODE`, so custom modes such as `astro build --mode preview` work as environment keys too. Set `environment` to explicitly override the detected mode. Each environment may override the single default `provider`; any omitted settings inherit from the default. OpenAI environments use the default LM Studio fallback; configure it with the top-level `fallback` option or set `fallback: false` to disable it. An environment configured with LM Studio uses only that provider.
+Astro `dev` uses the `development` override; `astro build` uses `production`. The integration selects an override using Astro's `import.meta.env.MODE`, so custom modes such as `astro build --mode preview` work as environment keys too. Set `environment` to explicitly override the detected mode. Each environment may override the single default `provider`; any omitted settings inherit from the default. Each environment can also set its own `failOnError`, which takes precedence over the top-level setting. OpenAI environments use the default LM Studio fallback; configure it with the top-level `fallback` option or set `fallback: false` to disable it. An environment configured with LM Studio uses only that provider.
 
 ### Provider configuration
 
@@ -76,13 +78,13 @@ The OpenAI SDK sends one request per batch, does not retry failed requests, and 
 | ------------------------ | ----------------------------------------------------------------- | ----------------------------------------------------------------------------- |
 | `collections`            | all collections                                                   | Optional allowlist of Astro content collections to index.                     |
 | `provider`               | OpenAI                                                            | Default provider and its settings.                                            |
-| `environments`           | `{}`                                                              | Provider overrides keyed by environment name.                                 |
+| `environments`           | `{}`                                                              | Provider and `failOnError` overrides keyed by environment name.               |
 | `environment`            | `"development"` for `astro dev`; `"production"` for `astro build` | Explicit environment key to select an override.                               |
 | `fallback`               | LM Studio                                                         | Fallback settings for an OpenAI provider. Set to `false` to disable fallback. |
 | `threshold`              | `0.65`                                                            | Minimum cosine similarity score for a recommendation.                         |
 | `limit`                  | `3`                                                               | Maximum recommendations returned per entry.                                   |
 | `logLevel`               | `"warn"`                                                          | One of `"silent"`, `"error"`, `"warn"`, `"info"`, or `"debug"`.               |
-| `failOnError`            | `false`                                                           | Throw if no configured provider can generate embeddings.                      |
+| `failOnError`            | `false`                                                           | Throw if no configured provider can generate embeddings; environment overrides take precedence. |
 | `cache`                  | `true`                                                            | Store embeddings in SQLite during Astro builds.                               |
 | `cachePath`              | `.astro/embeddings.db`                                            | SQLite file path, relative to the project root.                               |
 | `outputSimilarityScores` | `false`                                                           | Write pairwise similarity score JSON files into the build output.             |

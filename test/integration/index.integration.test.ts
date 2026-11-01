@@ -80,6 +80,28 @@ describe("Astro integration provider selection", () => {
         expect(source).not.toContain("apiKey");
     });
 
+    test("allows failOnError to be overridden per environment", () => {
+        const production = getRuntimeConfig("build", {
+            failOnError: false,
+            environments: {
+                production: { failOnError: true },
+            },
+        }) as {
+            environments: Record<string, { failOnError: boolean }>;
+        };
+        const development = getRuntimeConfig("dev", {
+            failOnError: true,
+            environments: {
+                development: { failOnError: false },
+            },
+        }) as {
+            environments: Record<string, { failOnError: boolean }>;
+        };
+
+        expect(production.environments.production?.failOnError).toBe(true);
+        expect(development.environments.development?.failOnError).toBe(false);
+    });
+
     test("supports custom environment keys and keeps the default local fallback", () => {
         const source = JSON.stringify(
             getRuntimeConfig("build", {
