@@ -1,7 +1,6 @@
 import { getEncoding, type TiktokenEncoding } from "js-tiktoken";
-
+import type { EmbeddingProviderConfig } from "../types.js";
 import { usesOpenAI } from "./provider.js";
-import type { EmbeddingProviderConfig } from "./types.js";
 
 export type Tokenizer = {
     count: (texts: string[]) => Promise<number[]>;

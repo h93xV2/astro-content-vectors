@@ -1,6 +1,9 @@
 import OpenAI from "openai";
 
-import type { ContentVectorsConfig, EmbeddingProviderConfig } from "./types.js";
+import type {
+    ContentVectorsConfig,
+    EmbeddingProviderConfig,
+} from "../types.js";
 
 const environment = () => {
     const vite = (

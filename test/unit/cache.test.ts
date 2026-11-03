@@ -5,7 +5,7 @@ import {
     getPostEmbeddingCacheEntry,
     initializeEmbeddingTable,
     savePostEmbedding,
-} from "../../src/cache.js";
+} from "../../src/embeddings/cache.js";
 
 const makeDatabase = () => {
     const db = new Database(":memory:");

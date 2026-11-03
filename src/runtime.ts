@@ -1,6 +1,6 @@
-import { embedAll } from "./embedder.js";
+import { embedAll } from "./embeddings/embedder.js";
+import { providerApiKey, usesOpenAI } from "./embeddings/provider.js";
 import { log } from "./logging.js";
-import { providerApiKey, usesOpenAI } from "./provider.js";
 import {
     type Embedding,
     getCosineSimilarity,
