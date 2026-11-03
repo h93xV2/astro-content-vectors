@@ -34,29 +34,20 @@ jobs:
             - name: Install dependencies
               run: bun ci
 
-            - name: Check code
-              run: bun run check
-
             - name: Lint commit
               run: bunx commitlint --last --verbose
 
-            - name: Test
-              run: bun run test
+            - name: Verify
+              run: mise run verify
 
             - name: Build package
               run: bun run build
 
-            - name: Typecheck
-              run: bun run typecheck
-
             - name: Test packaged artifact
               run: bun test test/package
 
-            - name: Test installed Astro package
-              run: bun run test:astro-install
-
-            - name: Inspect npm package
-              run: npm pack --dry-run --ignore-scripts
+            - name: Inspect package artifact
+              run: bun pm pack --dry-run --ignore-scripts
 
             - name: Release
               env:

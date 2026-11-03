@@ -43,11 +43,6 @@ export async function getRelatedContent(
         );
         if (!config.fallbackProvider) log(config, "warn", String(primaryError));
     } else {
-        log(
-            config,
-            "info",
-            `Generating embeddings for ${documents.length} content entries with ${config.provider.model}.`,
-        );
         try {
             const primaryProvider = primaryApiKey
                 ? { ...config.provider, apiKey: primaryApiKey }

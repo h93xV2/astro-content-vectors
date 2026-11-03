@@ -63,12 +63,17 @@ Astro `dev` uses the `development` override; `astro build` uses `production`. Th
 
 Both providers use the OpenAI embeddings API format. OpenAI uses `https://api.openai.com/v1` by default; LM Studio uses `http://127.0.0.1:1234/v1`. Set `baseUrl` when your server listens elsewhere, and set `model` to a model available to that provider. LM Studio defaults to `text-embedding-nomic-embed-text-v1.5`; OpenAI defaults to `text-embedding-3-small`.
 
-| Provider setting | Description                                                |
-| ---------------- | ---------------------------------------------------------- |
-| `type`           | `"openai"` or `"lmstudio"`. Defaults to `"openai"`.        |
-| `baseUrl`        | OpenAI-compatible API base URL. Defaults depend on `type`. |
-| `model`          | Embedding model name. Defaults depend on `type`.           |
-| `batchSize`      | Content entries per embedding request. Defaults to `32`.   |
+| Provider setting | Description                                                                                                                                        |
+| ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `type`           | `"openai"` or `"lmstudio"`. Defaults to `"openai"`.                                                                                                |
+| `baseUrl`        | OpenAI-compatible API base URL. Defaults depend on `type`.                                                                                         |
+| `model`          | Embedding model name. Defaults depend on `type`.                                                                                                   |
+| `batchSize`      | Text inputs, including chunks, per embedding request. Defaults to `32`.                                                                            |
+| `chunkTokens`    | Maximum tokens per embedding input. Defaults to `2000`. Long entries are split and their chunk vectors are combined with a token-weighted average. |
+| `alwaysChunk`    | `false`. Set `true` to make one chunk per paragraph, even when it fits within `chunkTokens`. Headings stay with the following paragraph.           |
+| `tokenizer`      | Tiktoken encoding for OpenAI providers. Defaults to `cl100k_base`. LM Studio uses the configured model's tokenizer through the LM Studio SDK.      |
+
+Chunking splits paragraph boundaries in both plain text and Markdown. Only Markdown bodies treat headings as section boundaries; Astro content bodies are marked as Markdown automatically. Direct runtime documents default to plain text; set `bodyFormat: "markdown"` to enable heading-aware chunking. Set `alwaysChunk: true` to keep each paragraph in its own chunk. An oversized paragraph is split further at whitespace boundaries. OpenAI uses `js-tiktoken`; LM Studio asks the configured local embedding model to tokenize text through its SDK. Set `chunkTokens` below the model's documented input limit to leave room for any model-specific input overhead.
 
 The OpenAI SDK sends one request per batch, does not retry failed requests, and times out a request after 60 seconds. A failed OpenAI request can then use the configured LM Studio fallback.
 
@@ -83,7 +88,7 @@ The OpenAI SDK sends one request per batch, does not retry failed requests, and 
 | `fallback`               | LM Studio                                                         | Fallback settings for an OpenAI provider. Set to `false` to disable fallback.                   |
 | `threshold`              | `0.65`                                                            | Minimum cosine similarity score for a recommendation.                                           |
 | `limit`                  | `3`                                                               | Maximum recommendations returned per entry.                                                     |
-| `logLevel`               | `"warn"`                                                          | One of `"silent"`, `"error"`, `"warn"`, `"info"`, or `"debug"`.                                 |
+| `logLevel`               | `"info"`                                                          | One of `"silent"`, `"error"`, `"warn"`, `"info"`, or `"debug"`.                                 |
 | `failOnError`            | `false`                                                           | Throw if no configured provider can generate embeddings; environment overrides take precedence. |
 | `cache`                  | `true`                                                            | Store embeddings in SQLite during Astro builds.                                                 |
 | `cachePath`              | `.astro/embeddings.db`                                            | SQLite file path, relative to the project root.                                                 |
@@ -164,6 +169,26 @@ For a static build, configure `OPENAI_API_KEY` as a protected build environment 
 The integration picks up this variable automatically. Keep it in the CI or hosting provider's secret settings; do not place its value in Astro config or commit it to the repository.
 
 ## Development
+
+Run the same shared checks used by pull request and release CI with:
+
+```sh
+mise run verify
+```
+
+To install the current working tree into a separate project for local package testing, create a uniquely versioned alpha tarball:
+
+```sh
+mise run pack:alpha
+```
+
+This builds the package, writes an `astro-content-vectors-<version>-alpha.<id>.tgz` file into a new directory under the operating system's temporary directory, and prints the alpha version plus a ready-to-copy `bun add` command. The temporary alpha version is only written into the tarball; the repository's stable version and release workflow are unchanged.
+
+Remove generated alpha packages when you are done testing with:
+
+```sh
+mise run clean:alpha
+```
 
 ```sh
 bun install
