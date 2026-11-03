@@ -39,9 +39,9 @@
         "astro": ">=7.0.0"
     },
     "scripts": {
-        "build": "npm run clean && tsc -p tsconfig.build.json",
+        "build": "bun run clean && tsc -p tsconfig.build.json",
         "clean": "node -e \"require('node:fs').rmSync('dist', { recursive: true, force: true })\"",
-        "prepack": "npm run build",
+        "prepack": "bun run build",
         "setup": "husky",
         "test": "bun run test:unit && bun run test:integration",
         "test:integration": "bun test test/integration",
@@ -105,7 +105,9 @@
         "typescript": "7.0.2"
     },
     "dependencies": {
+        "@lmstudio/sdk": "2.1.0",
         "better-sqlite3": "13.0.3",
+        "js-tiktoken": "1.0.21",
         "openai": "7.47.0"
     }
 }

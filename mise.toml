@@ -1,3 +1,20 @@
 [tools]
 bun = "1.4.4"
 node = "26.5.0"
+
+[tasks.'pack:alpha']
+description = "Build and pack a uniquely versioned local alpha package"
+run = "bun run build && node scripts/pack-alpha.mts"
+
+[tasks.'clean:alpha']
+description = "Remove locally generated alpha package archives"
+run = "node scripts/clean-alpha.mts"
+
+[tasks.verify]
+description = "Run code checks, typecheck, tests, and the Astro package smoke test"
+run = [
+    "bun run check",
+    "bun run test",
+    "bun run test:astro-install",
+    "bun run typecheck",
+]

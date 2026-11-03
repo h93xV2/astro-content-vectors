@@ -114,11 +114,12 @@ describe("installed Astro package", () => {
             );
 
             await run(
-                "npm",
+                "bun",
                 [
+                    "pm",
                     "pack",
                     "--ignore-scripts",
-                    "--pack-destination",
+                    "--destination",
                     tempDirectory,
                 ],
                 { cwd: projectRoot },

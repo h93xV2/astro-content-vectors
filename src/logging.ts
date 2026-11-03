@@ -15,7 +15,7 @@ export const log = (
     level: "error" | "warn" | "info" | "debug",
     message: string,
 ) => {
-    if (levels[config.logLevel ?? "warn"] >= levels[level]) {
+    if (levels[config.logLevel ?? "info"] >= levels[level]) {
         (config.logger ?? defaultLogger)(level, message);
     }
 };

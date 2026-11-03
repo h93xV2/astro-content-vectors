@@ -4,6 +4,7 @@ import { getCollection } from "astro:content";
 import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 
+import { log } from "./logging.js";
 import type {
     ContentDocument,
     ContentVectorsConfig,
@@ -72,6 +73,11 @@ export async function getRelatedContent(
 
     let pending = indexes.get(collection);
     if (!pending) {
+        log(
+            config,
+            "info",
+            `Starting related-content indexing for collection "${collection}".`,
+        );
         const created = getCollection(collection as never).then(
             (entries: AstroContentEntry[]) => {
                 const documents: ContentDocument[] = (
@@ -81,12 +87,18 @@ export async function getRelatedContent(
                     title: optionalString(entry.data.title),
                     text: optionalString(entry.data.description),
                     body: entry.body ?? "",
+                    bodyFormat: entry.body === undefined ? "text" : "markdown",
                 }));
 
                 const reportConfig: ContentVectorsConfig = {
                     ...config,
                     cacheNamespace: collection,
                 };
+                log(
+                    reportConfig,
+                    "info",
+                    `Loaded ${documents.length} entries from collection "${collection}".`,
+                );
                 if (outputSimilarityScores) {
                     reportConfig.onSimilarityScores = async (
                         pairs: SimilarityScore[],

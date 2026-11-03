@@ -1,6 +1,7 @@
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import type { AstroIntegration } from "astro";
+import type { TiktokenEncoding } from "js-tiktoken";
 
 import type { EmbeddingProviderConfig } from "./runtime.js";
 
@@ -35,6 +36,12 @@ export type ProviderSelection = {
     baseUrl?: string;
     model?: string;
     batchSize?: number;
+    /** Maximum tokens per embedding input. Defaults to 2000. */
+    chunkTokens?: number;
+    /** Emit one chunk per paragraph even when it fits within chunkTokens. */
+    alwaysChunk?: boolean;
+    /** Tiktoken encoding used to count chunks. Defaults to cl100k_base. */
+    tokenizer?: TiktokenEncoding;
     headers?: Record<string, string>;
     apiKey?: string;
 };

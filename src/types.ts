@@ -1,7 +1,11 @@
+import type { TiktokenEncoding } from "js-tiktoken";
+
 export type ContentDocument = {
     id: string;
     title?: string;
     body?: string;
+    /** How to interpret headings in body. Defaults to plain text. */
+    bodyFormat?: "markdown" | "text";
     /** Optional extra text such as tags or a description. */
     text?: string;
 };
@@ -12,8 +16,14 @@ export type EmbeddingProviderConfig = {
     baseUrl: string;
     model: string;
     apiKey?: string;
-    /** Number of documents sent in one request. Defaults to 32. */
+    /** Number of text inputs, including chunks, sent per request. Defaults to 32. */
     batchSize?: number;
+    /** Maximum tokens per embedding input. Defaults to 2000. */
+    chunkTokens?: number;
+    /** Emit one chunk per paragraph even when it fits within chunkTokens. */
+    alwaysChunk?: boolean;
+    /** Tiktoken encoding used to count chunks. Defaults to cl100k_base. */
+    tokenizer?: TiktokenEncoding;
     headers?: Record<string, string>;
 };
 
