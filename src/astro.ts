@@ -4,14 +4,14 @@ import { getCollection } from "astro:content";
 import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 
-import { log } from "./logging.js";
+import { log } from "./logging.ts";
 import type {
     ContentDocument,
     ContentVectorsConfig,
     RelatedContent,
     SimilarityScore,
-} from "./runtime.js";
-import { getRelatedContent as buildRelatedContent } from "./runtime.js";
+} from "./runtime.ts";
+import { getRelatedContent as buildRelatedContent } from "./runtime.ts";
 
 type AstroContentVectorsRuntimeConfig = {
     environments: Record<string, AstroRuntimeProviderConfig>;

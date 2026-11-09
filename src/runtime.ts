@@ -1,18 +1,18 @@
-import { embedAll } from "./embeddings/embedder.js";
-import { providerApiKey, usesOpenAI } from "./embeddings/provider.js";
-import { log } from "./logging.js";
+import { embedAll } from "./embeddings/embedder.ts";
+import { providerApiKey, usesOpenAI } from "./embeddings/provider.ts";
+import { log } from "./logging.ts";
 import {
     type Embedding,
     getCosineSimilarity,
     getPairWiseSimilarityScores,
     getSlugToMostRelatedPostsMap,
-} from "./related-posts.js";
+} from "./related-posts.ts";
 import type {
     ContentDocument,
     ContentVectorsConfig,
     RelatedContent,
     SimilarityScore,
-} from "./types.js";
+} from "./types.ts";
 
 /** Generate vectors and return ranked recommendations for every document. */
 export async function getRelatedContent(
@@ -152,7 +152,7 @@ export async function getRelatedContent(
     return related;
 }
 
-export type { Embedding, ScoredPost } from "./related-posts.js";
+export type { Embedding, ScoredPost } from "./related-posts.ts";
 export type {
     ContentDocument,
     ContentVectorsConfig,
@@ -160,7 +160,7 @@ export type {
     FetchLike,
     RelatedContent,
     SimilarityScore,
-} from "./types.js";
+} from "./types.ts";
 export {
     getCosineSimilarity as cosineSimilarity,
     getPairWiseSimilarityScores,

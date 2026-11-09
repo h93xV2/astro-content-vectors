@@ -51,6 +51,7 @@
         "typecheck": "tsc --noEmit",
         "format": "biome format --write .",
         "format:check": "biome format .",
+        "check:fix": "biome check --write .",
         "lint": "biome lint .",
         "check": "biome check ."
     },
@@ -107,6 +108,7 @@
     "dependencies": {
         "@lmstudio/sdk": "2.1.0",
         "better-sqlite3": "13.0.3",
+        "cloudflare": "7.3.0",
         "js-tiktoken": "1.0.21",
         "openai": "7.47.0"
     }

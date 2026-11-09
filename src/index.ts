@@ -3,7 +3,8 @@ import { fileURLToPath } from "node:url";
 import type { AstroIntegration } from "astro";
 import type { TiktokenEncoding } from "js-tiktoken";
 
-import type { EmbeddingProviderConfig } from "./runtime.js";
+import type { EmbeddingProviderConfig } from "./runtime.ts";
+import type { ContentVectorsConfig } from "./types.ts";
 
 export type AstroContentVectorsOptions = {
     /** Optional collection allowlist. Calls for other collections return no results. */
@@ -29,6 +30,12 @@ export type AstroContentVectorsOptions = {
     cache?: boolean;
     /** SQLite file path, relative to the Astro project root. */
     cachePath?: string;
+    /** Select caching driver. */
+    cacheDriver?: "D1" | "SQLite";
+};
+
+type AstroRuntimeProviderConfig = ContentVectorsConfig & {
+    collections?: string[] | null;
 };
 
 export type ProviderSelection = {
@@ -77,7 +84,7 @@ const defineEnvironment = (
     name: string,
     options: AstroContentVectorsOptions,
     projectRoot: string,
-) => {
+): AstroRuntimeProviderConfig => {
     const selected = {
         type: "openai" as const,
         ...options.provider,
@@ -106,6 +113,7 @@ const defineEnvironment = (
             projectRoot,
             options.cachePath ?? ".astro/embeddings.db",
         ),
+        cacheDriver: options.cacheDriver,
     };
 };
 
@@ -168,10 +176,10 @@ export type {
     EmbeddingProviderConfig,
     RelatedContent,
     SimilarityScore,
-} from "./runtime.js";
+} from "./runtime.ts";
 
 export {
     cosineSimilarity,
     getPairWiseSimilarityScores,
     getSlugToMostRelatedPostsMap,
-} from "./runtime.js";
+} from "./runtime.ts";

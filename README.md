@@ -92,6 +92,7 @@ The OpenAI SDK sends one request per batch, does not retry failed requests, and 
 | `failOnError`            | `false`                                                           | Throw if no configured provider can generate embeddings; environment overrides take precedence. |
 | `cache`                  | `true`                                                            | Store embeddings in SQLite during Astro builds.                                                 |
 | `cachePath`              | `.astro/embeddings.db`                                            | SQLite file path, relative to the project root.                                                 |
+| `cacheDriver`            | `"SQLite"`                                                        | Cache backend: `"SQLite"` or `"D1"`.                                                            |
 | `outputSimilarityScores` | `false`                                                           | Write pairwise similarity score JSON files into the build output.                               |
 
 ```js
@@ -101,6 +102,27 @@ contentVectors({
     environments: {
         preview: { provider: { model: "text-embedding-3-large" } },
     },
+});
+```
+
+### Cloudflare D1 cache
+
+Set `cacheDriver: "D1"` to store the embedding cache in a Cloudflare D1 database. The integration accesses D1 through Cloudflare's API during the Astro build, creates the `embeddings` table if needed, and continues to calculate similarity in memory.
+
+Provide these variables in the build environment (for example, Cloudflare Pages project settings):
+
+| Variable                    | Value                                                       |
+| --------------------------- | ----------------------------------------------------------- |
+| `CLOUDFLARE_ACCOUNT_ID`     | Your Cloudflare account ID.                                 |
+| `CLOUDFLARE_D1_DATABASE_ID` | The UUID of the D1 database to use.                         |
+| `CLOUDFLARE_API_TOKEN`      | An API token with the account-level **D1:Edit** permission. |
+
+Keep the API token in the build environment; don’t put it in `astro.config` or client-side code. Cloudflare documents that `D1:Edit` is required for database writes through its HTTP API ([D1 API permissions](https://developers.cloudflare.com/d1/platform/release-notes/)).
+
+```js
+contentVectors({
+    cache: true,
+    cacheDriver: "D1",
 });
 ```
 
@@ -124,7 +146,7 @@ const relatedPosts = recommendations
 
 Each collection is indexed once per server/build process. The integration embeds each entry's title, description (if any), and Markdown body. `getRelatedContent(collection, id)` returns an array of `{ id, score }` objects, ordered by descending cosine similarity. The current entry is excluded from its own recommendations. Entries scoring below `threshold` are omitted. Set `logLevel` to `silent` to disable logs.
 
-By default, generated vectors are cached in `.astro/embeddings.db` using SQLite. The cache is keyed by collection, entry ID, provider, and model, and refreshes an entry when its source text changes. Set `cache: false` to disable it or `cachePath` to choose another database file.
+By default, generated vectors are cached in `.astro/embeddings.db` using SQLite. Set `cacheDriver: "D1"` to use Cloudflare D1 instead. In either backend, the cache is keyed by collection, entry ID, provider, and model, and refreshes an entry when its source text changes. Set `cache: false` to disable caching; `cachePath` applies to SQLite.
 
 The integration uses the OpenAI SDK for embedding requests. LM Studio works through its OpenAI-compatible API. The runtime API is also exported for custom content loaders:
 

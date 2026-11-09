@@ -1,91 +1,21 @@
-import { log } from "../logging.js";
+import { log } from "../logging.ts";
 import type {
     ContentDocument,
     ContentVectorsConfig,
     EmbeddingProviderConfig,
-} from "../types.js";
-import {
-    getEmbeddingDatabase,
-    getPostEmbeddingCacheEntry,
-    type PostEmbeddingCacheEntry,
-    savePostEmbedding,
-} from "./cache.js";
+} from "../types.ts";
+import cacheFactory from "./cache/factory.ts";
 import {
     type ChunkPlan,
-    contentText,
-    documentParagraphs,
     flattenChunkPlan,
+    makePendingDocuments,
     prepareChunks,
-} from "./chunking.js";
+} from "./chunking.ts";
 import {
     combineChunkVectors,
     requestChunkVectors,
     validateVectors,
-} from "./vectors.js";
-
-const embeddingCacheId = (
-    id: string,
-    provider: EmbeddingProviderConfig,
-    namespace?: string,
-    bodyFormat?: ContentDocument["bodyFormat"],
-) =>
-    JSON.stringify([
-        provider.providerName ?? provider.baseUrl,
-        provider.baseUrl,
-        provider.model,
-        provider.chunkTokens ?? 2000,
-        provider.alwaysChunk ?? false,
-        provider.tokenizer ?? "model-default",
-        bodyFormat ?? "text",
-        namespace ?? "",
-        id,
-    ]);
-
-type PendingDocument = {
-    index: number;
-    id: string;
-    text: string;
-    paragraphs: ReturnType<typeof documentParagraphs>;
-    cacheId: string;
-    cacheEntry: PostEmbeddingCacheEntry | undefined;
-};
-
-const lookupCachedEmbeddings = (
-    documents: ContentDocument[],
-    provider: EmbeddingProviderConfig,
-    config: ContentVectorsConfig,
-    database: ReturnType<typeof getEmbeddingDatabase> | undefined,
-) => {
-    const vectors: Array<number[] | undefined> = new Array(documents.length);
-    const pending: PendingDocument[] = [];
-    let hits = 0;
-    documents.forEach((document, index) => {
-        const text = contentText(document);
-        const cacheId = embeddingCacheId(
-            document.id,
-            provider,
-            config.cacheNamespace,
-            document.bodyFormat,
-        );
-        const cacheEntry = database
-            ? getPostEmbeddingCacheEntry(database, cacheId, text)
-            : undefined;
-        if (cacheEntry?.vector) {
-            vectors[index] = cacheEntry.vector;
-            hits++;
-            return;
-        }
-        pending.push({
-            index,
-            id: document.id,
-            text,
-            paragraphs: documentParagraphs(document),
-            cacheId,
-            cacheEntry,
-        });
-    });
-    return { vectors, pending, hits };
-};
+} from "./vectors.ts";
 
 const logPreparation = (
     plan: ChunkPlan[],
@@ -119,66 +49,44 @@ const logPreparation = (
     );
 };
 
-const saveCachedVectors = (
-    database: ReturnType<typeof getEmbeddingDatabase> | undefined,
-    plan: ChunkPlan[],
-    vectors: Array<number[] | undefined>,
-    config: ContentVectorsConfig,
-) => {
-    if (!database) return;
-    let saved = 0;
-    for (const document of plan) {
-        const vector = vectors[document.index];
-        if (!document.cacheEntry || !vector) continue;
-        savePostEmbedding(
-            database,
-            document.cacheId,
-            document.cacheEntry.hashedContent,
-            vector,
-            document.cacheEntry.row,
-        );
-        saved++;
-    }
-    if (saved > 0)
-        log(
-            config,
-            "debug",
-            `Saved ${saved} new vector${saved === 1 ? "" : "s"} to the embedding cache.`,
-        );
-};
-
 export const embedAll = async (
     documents: ContentDocument[],
     provider: EmbeddingProviderConfig,
     config: ContentVectorsConfig,
 ): Promise<number[][]> => {
-    const database =
-        config.cache === true
-            ? getEmbeddingDatabase(config.cachePath)
-            : undefined;
-    const cache = lookupCachedEmbeddings(documents, provider, config, database);
-    const plan = await prepareChunks(cache.pending, provider, config);
-    const inputs = flattenChunkPlan(plan);
-    logPreparation(
-        plan,
-        inputs,
-        cache.hits,
-        Boolean(database),
-        provider,
-        config,
-    );
+    const cache = config.cache ? await cacheFactory(config) : undefined;
+    const cached = cache
+        ? await cache.lookupCachedEmbeddings(documents, provider, config)
+        : undefined;
 
-    const chunkVectors = await requestChunkVectors(inputs, provider, config);
-    for (const document of plan) {
-        const vector = combineChunkVectors(
-            chunkVectors.get(document.index) ?? [],
-            document.weights,
+    const vectors =
+        cached?.vectors ?? new Array<number[] | undefined>(documents.length);
+    const pending = cached?.pending ?? makePendingDocuments(documents);
+    const plan = await prepareChunks(pending, provider, config);
+    const inputs = flattenChunkPlan(plan);
+
+    const hits = cached ? cached.hits : 0;
+    logPreparation(plan, inputs, hits, Boolean(cache), provider, config);
+
+    if (inputs.length > 0) {
+        const chunkVectors = await requestChunkVectors(
+            inputs,
+            provider,
+            config,
         );
-        if (!vector) throw new Error("No embedding chunks were generated.");
-        cache.vectors[document.index] = vector;
+        for (const document of plan) {
+            const vector = combineChunkVectors(
+                chunkVectors.get(document.index) ?? [],
+                document.weights,
+            );
+            if (!vector) throw new Error("No embedding chunks were generated.");
+            vectors[document.index] = vector;
+        }
     }
 
-    const completeVectors = validateVectors(cache.vectors);
-    saveCachedVectors(database, plan, cache.vectors, config);
+    const completeVectors = validateVectors(vectors);
+    if (cache) {
+        await cache.saveCachedVectors(plan, vectors, config);
+    }
     return completeVectors;
 };

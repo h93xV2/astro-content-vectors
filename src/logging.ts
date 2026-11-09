@@ -1,4 +1,4 @@
-import type { ContentVectorsConfig } from "./types.js";
+import type { ContentVectorsConfig } from "./types.ts";
 
 const levels = { silent: 0, error: 1, warn: 2, info: 3, debug: 4 } as const;
 
