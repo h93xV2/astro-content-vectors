@@ -1,7 +1,7 @@
 {
     "name": "astro-content-vectors",
     "description": "An Astro integration for vector-based related content using local or hosted embeddings.",
-    "version": "1.2.0",
+    "version": "1.2.1",
     "author": "h93xV2",
     "license": "MIT",
     "repository": {
@@ -110,6 +110,6 @@
         "better-sqlite3": "13.0.3",
         "cloudflare": "7.3.0",
         "js-tiktoken": "1.0.21",
-        "openai": "7.47.0"
+        "openai": "7.53.0"
     }
 }
