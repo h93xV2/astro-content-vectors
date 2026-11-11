@@ -1,6 +1,9 @@
 name: Tests
 
 on:
+    push:
+        branches:
+            - main
     pull_request:
         branches:
             - main
@@ -27,3 +30,11 @@ jobs:
 
             - name: Verify
               run: mise run verify
+
+            - name: Generate coverage report
+              run: bun test --coverage --coverage-reporter=lcov test/unit test/integration
+
+            - name: Upload coverage reports to Codecov
+              uses: codecov/codecov-action@v5
+              with:
+                  token: ${{ secrets.CODECOV_TOKEN }}
