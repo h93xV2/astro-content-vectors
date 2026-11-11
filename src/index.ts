@@ -15,7 +15,11 @@ export type AstroContentVectorsOptions = {
     environment?: string;
     environments?: Record<
         string,
-        { provider?: ProviderOverride; failOnError?: boolean }
+        {
+            provider?: ProviderOverride;
+            failOnError?: boolean;
+            cacheDriver?: "D1" | "SQLite";
+        }
     >;
     /** LM Studio fallback used when an OpenAI provider has no key or fails. */
     fallback?: false | ProviderOverride;
@@ -115,7 +119,8 @@ const defineEnvironment = (
             projectRoot,
             options.cachePath ?? ".astro/embeddings.db",
         ),
-        cacheDriver: options.cacheDriver,
+        cacheDriver:
+            options.environments?.[name]?.cacheDriver ?? options.cacheDriver,
         cloudflareApiTokenEnvVar: options.cloudflareApiTokenEnvVar,
     };
 };

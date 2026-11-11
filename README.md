@@ -86,7 +86,7 @@ The OpenAI SDK sends one request per batch, does not retry failed requests, and 
 | ------------------------ | ----------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
 | `collections`            | all collections                                                   | Optional allowlist of Astro content collections to index.                                       |
 | `provider`               | OpenAI                                                            | Default provider and its settings.                                                              |
-| `environments`           | `{}`                                                              | Provider and `failOnError` overrides keyed by environment name.                                 |
+| `environments`           | `{}`                                                              | Provider, `failOnError`, and `cacheDriver` overrides keyed by environment name.                  |
 | `environment`            | `"development"` for `astro dev`; `"production"` for `astro build` | Explicit environment key to select an override.                                                 |
 | `fallback`               | LM Studio                                                         | Fallback settings for an OpenAI provider. Set to `false` to disable fallback.                   |
 | `threshold`              | `0.65`                                                            | Minimum cosine similarity score for a recommendation.                                           |
@@ -103,8 +103,12 @@ The OpenAI SDK sends one request per batch, does not retry failed requests, and 
 contentVectors({
     environment: process.env.DEPLOY_ENV ?? "preview",
     provider: { type: "openai", model: "text-embedding-3-small" },
+    cacheDriver: "SQLite",
     environments: {
-        preview: { provider: { model: "text-embedding-3-large" } },
+        preview: {
+            provider: { model: "text-embedding-3-large" },
+            cacheDriver: "D1",
+        },
     },
 });
 ```
