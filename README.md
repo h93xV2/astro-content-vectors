@@ -1,5 +1,8 @@
 # astro-content-vectors
 
+[![npm version](https://img.shields.io/npm/v/astro-content-vectors)](https://www.npmjs.com/package/astro-content-vectors)
+[![codecov](https://codecov.io/gh/h93xV2/astro-content-vectors/branch/main/graph/badge.svg)](https://codecov.io/gh/h93xV2/astro-content-vectors)
+
 An Astro integration that ranks entries in a content collection by embedding similarity. It uses OpenAI when `OPENAI_API_KEY` is available and automatically falls back to a local LM Studio server when the key is missing or OpenAI is unreachable.
 
 Requires Astro 7 or later and Node.js 20 or later for the build process.
