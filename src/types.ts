@@ -54,6 +54,10 @@ export type ContentVectorsConfig = {
     cachePath?: string;
     /** Prevent ID collisions between independently processed collections. */
     cacheNamespace?: string;
+    /** Select caching driver. */
+    cacheDriver?: "D1" | "SQLite";
+    /** Environment variable containing the Cloudflare D1 API token. */
+    cloudflareApiTokenEnvVar?: string;
     /** Inject fetch in tests or non-standard runtimes. */
     fetch?: FetchLike;
     onSimilarityScores?: (scores: SimilarityScore[]) => void | Promise<void>;

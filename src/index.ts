@@ -3,7 +3,8 @@ import { fileURLToPath } from "node:url";
 import type { AstroIntegration } from "astro";
 import type { TiktokenEncoding } from "js-tiktoken";
 
-import type { EmbeddingProviderConfig } from "./runtime.js";
+import type { EmbeddingProviderConfig } from "./runtime.ts";
+import type { ContentVectorsConfig } from "./types.ts";
 
 export type AstroContentVectorsOptions = {
     /** Optional collection allowlist. Calls for other collections return no results. */
@@ -14,7 +15,11 @@ export type AstroContentVectorsOptions = {
     environment?: string;
     environments?: Record<
         string,
-        { provider?: ProviderOverride; failOnError?: boolean }
+        {
+            provider?: ProviderOverride;
+            failOnError?: boolean;
+            cacheDriver?: "D1" | "SQLite";
+        }
     >;
     /** LM Studio fallback used when an OpenAI provider has no key or fails. */
     fallback?: false | ProviderOverride;
@@ -29,6 +34,14 @@ export type AstroContentVectorsOptions = {
     cache?: boolean;
     /** SQLite file path, relative to the Astro project root. */
     cachePath?: string;
+    /** Select caching driver. */
+    cacheDriver?: "D1" | "SQLite";
+    /** Environment variable containing the Cloudflare D1 API token. */
+    cloudflareApiTokenEnvVar?: string;
+};
+
+type AstroRuntimeProviderConfig = ContentVectorsConfig & {
+    collections?: string[] | null;
 };
 
 export type ProviderSelection = {
@@ -77,7 +90,7 @@ const defineEnvironment = (
     name: string,
     options: AstroContentVectorsOptions,
     projectRoot: string,
-) => {
+): AstroRuntimeProviderConfig => {
     const selected = {
         type: "openai" as const,
         ...options.provider,
@@ -106,6 +119,9 @@ const defineEnvironment = (
             projectRoot,
             options.cachePath ?? ".astro/embeddings.db",
         ),
+        cacheDriver:
+            options.environments?.[name]?.cacheDriver ?? options.cacheDriver,
+        cloudflareApiTokenEnvVar: options.cloudflareApiTokenEnvVar,
     };
 };
 
@@ -168,10 +184,10 @@ export type {
     EmbeddingProviderConfig,
     RelatedContent,
     SimilarityScore,
-} from "./runtime.js";
+} from "./runtime.ts";
 
 export {
     cosineSimilarity,
     getPairWiseSimilarityScores,
     getSlugToMostRelatedPostsMap,
-} from "./runtime.js";
+} from "./runtime.ts";

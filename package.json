@@ -43,7 +43,6 @@
         "clean": "node -e \"require('node:fs').rmSync('dist', { recursive: true, force: true })\"",
         "prepack": "bun run build",
         "setup": "husky",
-        "test": "bun run test:unit && bun run test:integration",
         "test:integration": "bun test test/integration",
         "test:astro-install": "bun run build && bun test test/e2e/astro-install.test.ts",
         "test:package": "bun run build && bun test test/package",
@@ -51,6 +50,7 @@
         "typecheck": "tsc --noEmit",
         "format": "biome format --write .",
         "format:check": "biome format .",
+        "check:fix": "biome check --write .",
         "lint": "biome lint .",
         "check": "biome check ."
     },
@@ -107,6 +107,7 @@
     "dependencies": {
         "@lmstudio/sdk": "2.1.0",
         "better-sqlite3": "13.0.3",
+        "cloudflare": "7.3.0",
         "js-tiktoken": "1.0.21",
         "openai": "7.53.0"
     }

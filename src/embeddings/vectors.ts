@@ -1,10 +1,10 @@
-import { log } from "../logging.js";
+import { log } from "../logging.ts";
 import type {
     ContentVectorsConfig,
     EmbeddingProviderConfig,
-} from "../types.js";
-import type { ChunkInput } from "./chunking.js";
-import { requestEmbeddings } from "./provider.js";
+} from "../types.ts";
+import type { ChunkInput } from "./chunking.ts";
+import { requestEmbeddings } from "./provider.ts";
 
 export const requestChunkVectors = async (
     inputs: ChunkInput[],

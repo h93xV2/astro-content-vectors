@@ -1,10 +1,11 @@
-import { log } from "../logging.js";
+import { log } from "../logging.ts";
 import type {
     ContentDocument,
     ContentVectorsConfig,
     EmbeddingProviderConfig,
-} from "../types.js";
-import { createTokenizer, type Tokenizer } from "./tokenizer.js";
+} from "../types.ts";
+import type { PostEmbeddingCacheEntry } from "./cache/cache.ts";
+import { createTokenizer, type Tokenizer } from "./tokenizer.ts";
 
 export type Paragraph = { text: string; startsSection: boolean };
 export type ChunkPlan = {
@@ -13,7 +14,7 @@ export type ChunkPlan = {
     text: string;
     paragraphs: Paragraph[];
     cacheId: string;
-    cacheEntry: import("./cache.js").PostEmbeddingCacheEntry | undefined;
+    cacheEntry: PostEmbeddingCacheEntry | undefined;
     chunks: string[];
     weights: number[];
 };
@@ -67,6 +68,19 @@ export const documentParagraphs = (document: ContentDocument): Paragraph[] => {
         ? paragraphs
         : [{ text: contentText(document), startsSection: false }];
 };
+
+/** Build the chunking inputs for documents that have no cache metadata. */
+export const makePendingDocuments = (
+    documents: ContentDocument[],
+): Omit<ChunkPlan, "chunks" | "weights">[] =>
+    documents.map((document, index) => ({
+        index,
+        id: document.id,
+        text: contentText(document),
+        paragraphs: documentParagraphs(document),
+        cacheId: "",
+        cacheEntry: undefined,
+    }));
 
 const splitIntoChunks = async (
     text: string,

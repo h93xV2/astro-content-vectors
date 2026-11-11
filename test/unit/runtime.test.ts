@@ -3,7 +3,7 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-import { closeEmbeddingDatabase } from "../../src/embeddings/cache.js";
+import { closeEmbeddingDatabase } from "../../src/embeddings/cache/factory.js";
 import {
     type ContentVectorsConfig,
     cosineSimilarity,

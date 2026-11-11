@@ -156,4 +156,14 @@ describe("Astro integration provider selection", () => {
         expect(defaults).toContain(".astro/embeddings.db");
         expect(disabled).toContain('"cache":false');
     });
+
+    test("passes the selected cache driver into the runtime config", () => {
+        const config = getRuntimeConfig("build", {
+            cacheDriver: "D1",
+        }) as {
+            environments: Record<string, { cacheDriver?: string }>;
+        };
+
+        expect(config.environments.production?.cacheDriver).toBe("D1");
+    });
 });
