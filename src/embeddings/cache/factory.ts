@@ -44,7 +44,11 @@ export default async (
     let driver: CacheDatabaseDriver;
 
     if (config.cacheDriver === "D1") {
-        const client = new Cloudflare();
+        const apiTokenEnvVar =
+            config.cloudflareApiTokenEnvVar ?? "CLOUDFLARE_API_TOKEN";
+        const client = new Cloudflare({
+            apiToken: process.env[apiTokenEnvVar],
+        });
         const accountId = process.env.CLOUDFLARE_ACCOUNT_ID;
         const databaseId = process.env.CLOUDFLARE_D1_DATABASE_ID;
 

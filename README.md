@@ -96,6 +96,7 @@ The OpenAI SDK sends one request per batch, does not retry failed requests, and 
 | `cache`                  | `true`                                                            | Store embeddings in SQLite during Astro builds.                                                 |
 | `cachePath`              | `.astro/embeddings.db`                                            | SQLite file path, relative to the project root.                                                 |
 | `cacheDriver`            | `"SQLite"`                                                        | Cache backend: `"SQLite"` or `"D1"`.                                                            |
+| `cloudflareApiTokenEnvVar` | `"CLOUDFLARE_API_TOKEN"`                                        | Environment variable name containing the Cloudflare D1 API token.                               |
 | `outputSimilarityScores` | `false`                                                           | Write pairwise similarity score JSON files into the build output.                               |
 
 ```js
@@ -120,12 +121,13 @@ Provide these variables in the build environment (for example, Cloudflare Pages 
 | `CLOUDFLARE_D1_DATABASE_ID` | The UUID of the D1 database to use.                         |
 | `CLOUDFLARE_API_TOKEN`      | An API token with the account-level **D1:Edit** permission. |
 
-Keep the API token in the build environment; don’t put it in `astro.config` or client-side code. Cloudflare documents that `D1:Edit` is required for database writes through its HTTP API ([D1 API permissions](https://developers.cloudflare.com/d1/platform/release-notes/)).
+If `CLOUDFLARE_API_TOKEN` is already used for another purpose, specify the name of a separate token variable in the integration config. For example, set `cloudflareApiTokenEnvVar: "ASTRO_D1_TOKEN"` and provide `ASTRO_D1_TOKEN` in the build environment. Keep the API token in the build environment; don’t put it in `astro.config` or client-side code. Cloudflare documents that `D1:Edit` is required for database writes through its HTTP API ([D1 API permissions](https://developers.cloudflare.com/d1/platform/release-notes/)).
 
 ```js
 contentVectors({
     cache: true,
     cacheDriver: "D1",
+    cloudflareApiTokenEnvVar: "ASTRO_D1_TOKEN",
 });
 ```
 
@@ -219,10 +221,10 @@ mise run clean:alpha
 bun install
 bun run check
 bun run typecheck
-bun run test
+bun test
 bun run test:package
 bun run test:astro-install
 bun run build
 ```
 
-`bun run test` runs the unit and integration suites. `bun run test:package` builds the package and checks its exports. `bun run test:astro-install` packs and installs the package into a temporary Astro 7 fixture, then runs a static build against a local mock embeddings server.
+`bun test` runs every test file. Use `bun run test:unit`, `bun run test:integration`, `bun run test:package`, and `bun run test:astro-install` to run individual suites.

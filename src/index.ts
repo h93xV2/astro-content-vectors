@@ -32,6 +32,8 @@ export type AstroContentVectorsOptions = {
     cachePath?: string;
     /** Select caching driver. */
     cacheDriver?: "D1" | "SQLite";
+    /** Environment variable containing the Cloudflare D1 API token. */
+    cloudflareApiTokenEnvVar?: string;
 };
 
 type AstroRuntimeProviderConfig = ContentVectorsConfig & {
@@ -114,6 +116,7 @@ const defineEnvironment = (
             options.cachePath ?? ".astro/embeddings.db",
         ),
         cacheDriver: options.cacheDriver,
+        cloudflareApiTokenEnvVar: options.cloudflareApiTokenEnvVar,
     };
 };
 
