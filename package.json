@@ -108,6 +108,6 @@
         "@lmstudio/sdk": "2.1.0",
         "better-sqlite3": "13.0.3",
         "js-tiktoken": "1.0.21",
-        "openai": "7.47.0"
+        "openai": "7.53.0"
     }
 }
