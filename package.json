@@ -109,6 +109,6 @@
         "better-sqlite3": "13.0.3",
         "cloudflare": "7.3.0",
         "js-tiktoken": "1.0.21",
-        "openai": "7.53.0"
+        "openai": "7.55.0"
     }
 }
