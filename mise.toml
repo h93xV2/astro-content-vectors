@@ -1,6 +1,6 @@
 [tools]
 bun = "1.4.4"
-node = "26.5.0"
+node = "26.13.0"
 
 [tasks.'pack:alpha']
 description = "Build and pack a uniquely versioned local alpha package"
